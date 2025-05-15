@@ -1,0 +1,45 @@
+{
+  "name": "Upwork Message Extension",
+  "description": "Upwork Message Extension",
+  "version": "0.0.1",
+  "manifest_version": 3,
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "storage",
+    "webRequest",
+    "scripting",
+    "alarms"
+  ],
+  "background": {
+    "service_worker": "background.bundle.js"
+  },
+  "options_page": "option.html",
+  "action": {
+    "default_title": "Upwork Message Extension",
+    "default_icon": "images/patiom-new-logo.png",
+    "default_popup": "popup.html"
+  },
+  "icons": {
+    "16": "images/patiom-new-logo.png",
+    "19": "images/patiom-new-logo.png",
+    "38": "images/patiom-new-logo.png",
+    "128": "images/patiom-new-logo.png"
+  },
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.amazon.com/s?k=*"
+      ],
+      "js": [
+        "amazon_product_hunter_script.bundle.js"
+      ]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; worker-src 'self'"
+  }
+}
