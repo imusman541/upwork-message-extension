@@ -17,27 +17,27 @@
   "options_page": "option.html",
   "action": {
     "default_title": "Upwork Message Extension",
-    "default_icon": "images/patiom-new-logo.png",
+    "default_icon": "images/upwork-logo.png",
     "default_popup": "popup.html"
   },
   "icons": {
-    "16": "images/patiom-new-logo.png",
-    "19": "images/patiom-new-logo.png",
-    "38": "images/patiom-new-logo.png",
-    "128": "images/patiom-new-logo.png"
+    "16": "images/upwork-logo.png",
+    "19": "images/upwork-logo.png",
+    "38": "images/upwork-logo.png",
+    "128": "images/upwork-logo.png"
   },
-  "host_permissions": [
-    "<all_urls>"
-  ],
   "content_scripts": [
     {
       "matches": [
-        "https://www.amazon.com/s?k=*"
+        "https://www.upwork.com/ab/messages/rooms/*"
       ],
       "js": [
-        "amazon_product_hunter_script.bundle.js"
+        "upwork_sender_reciever_script.bundle.js"
       ]
     }
+  ],
+  "host_permissions": [
+    "<all_urls>"
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; worker-src 'self'"

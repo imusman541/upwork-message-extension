@@ -9,6 +9,7 @@ module.exports = (env, options) => {
     devtool: 'source-map',
     entry: {
       content_script: "./src/content-scripts/index.js",
+      upwork_sender_reciever_script: path.join(__dirname, 'src', 'content-scripts', 'upwork', 'sender-reciever.js'),
       background: "./src/background.js",
       popup: "./src/pages/popup/index.js",
       option: "./src/pages/options/index.js",

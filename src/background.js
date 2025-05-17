@@ -70,31 +70,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  const { url } = tab;
-
-  let originUrl = url;
-  if (url && !url?.includes('www.ebay')) {
-    const newURL = new URL(url);
-    originUrl = newURL.origin;
-  }
+  console.log('\n tab', tab);
+  const { url, pinned } = tab;
 
   if (changeInfo.status === 'complete') {
-    if (originUrl.includes('www.upwork.')) {
-      const regex = /https?:\/\/(www\.)?amazon\.(com|co\.uk)\/([A-Za-z0-9-]+\/)?(gp\/product|dp)\/[A-Z0-9]{10}(\/|\?|$)/;
+    if (url.includes('upwork.com/ab/messages/rooms') && pinned) {
+      console.log('\n going to run Upwork content script');
 
-      const isMatch = regex.test(url);
-      if (isMatch) {
-        console.log('\n going to run Amazon content script');
-
-        // chrome.scripting.executeScript({
-        //   target: { tabId },
-        //   files: ['amazon_main_product.bundle.js']
-        // });
-      } else {
-        console.log('\n not on the correct link');
-      }
+      chrome.scripting.executeScript({
+        target: { tabId },
+        files: ['upwork_sender_reciever_script.bundle.js']
+      });
     } else {
-      console.log('\n not on the correct store', originUrl);
+      console.log('\n not on the correct store', url);
     }
   }
+});
+
+chrome.tabs.query({}, function(tabs) {
+  const pinnedTabs = tabs.filter(tab => tab.pinned);
+  console.log('Pinned tabs:', pinnedTabs);
 });
