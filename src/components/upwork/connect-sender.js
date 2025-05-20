@@ -36,9 +36,7 @@ const Connect = ({ senderRoomId }) => {
     await setLocal(senderRoomId, recieverRoomId);
     await setLocal(recieverRoomId, senderRoomId);
 
-    // const filteredLocalRecieverRoomIds = localRecieverRoomIds.filter((obj) => obj.value !== recieverRoomId);
-    // await setLocal('reciever-room-ids', filteredLocalRecieverRoomIds);
-
+    setAlreadyMapped(true);
     setIsModalOpen(!isModalOpen);
   };
 

@@ -1,4 +1,4 @@
-import { setLocal } from './services/dbService';
+import { getLocal, setLocal } from './services/dbService';
 import { DEFAULT_COLLAGE_TEMPLATE, VERO_BRANDS } from './services/utils';
 
 chrome.runtime.onInstalled.addListener(async () => {
@@ -70,24 +70,63 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  console.log('\n tab', tab);
-  const { url, pinned } = tab;
+  // const { url, pinned } = tab;
 
-  if (changeInfo.status === 'complete') {
-    if (url.includes('upwork.com/ab/messages/rooms') && pinned) {
-      console.log('\n going to run Upwork content script');
+  // if (changeInfo.status === 'complete') {
+  //   if (url.includes('upwork.com/ab/messages/rooms') && pinned) {
+  //     console.log('\n going to run Upwork content script');
 
-      chrome.scripting.executeScript({
-        target: { tabId },
-        files: ['upwork_sender_reciever_script.bundle.js']
-      });
-    } else {
-      console.log('\n not on the correct store', url);
+  //     chrome.scripting.executeScript({
+  //       target: { tabId },
+  //       files: ['upwork_sender_reciever_script.bundle.js']
+  //     });
+  //   } else {
+  //     console.log('\n not on the correct store', url);
+  //   }
+  // }
+  chrome.tabs.query({}, async (tabs) => {
+    const pinnedTabs = tabs.filter(tab => tab.pinned);
+    console.log('Pinned tabs:', pinnedTabs);
+  
+    if (pinnedTabs?.length) {
+      const url1 = pinnedTabs[0].url;
+      const url2 = pinnedTabs[1].url;
+  
+      const senderCompanyReferenceId = await getLocal('sender-company-reference-id');
+      const recieverCompanyReferenceId = await getLocal('reciever-company-reference-id');
+  
+      if (url1.includes(senderCompanyReferenceId)) {
+        chrome.scripting.executeScript({
+          target: { tabId: pinnedTabs[0].id },
+          files: ['upwork_sender_script.bundle.js']
+        });
+      } else if (url1.includes(recieverCompanyReferenceId)) {
+        chrome.scripting.executeScript({
+          target: { tabId: pinnedTabs[0].id },
+          files: ['upwork_reciever_script.bundle.js']
+        });
+      } 
+
+      if (url2.includes(senderCompanyReferenceId)) {
+        chrome.scripting.executeScript({
+          target: { tabId: pinnedTabs[1].id },
+          files: ['upwork_sender_script.bundle.js']
+        });
+      } else if (url2.includes(recieverCompanyReferenceId)) {
+        chrome.scripting.executeScript({
+          target: { tabId: pinnedTabs[1].id },
+          files: ['upwork_reciever_script.bundle.js']
+        });
+      }
+  
+      const senderItervalId = await getLocal('sender-interval-id');
+      console.log('\n senderItervalId', senderItervalId);
+      const recieverItervalId = await getLocal('reciever-interval-id');
+      console.log('\n recieverItervalId', recieverItervalId);
+  
+      clearInterval(senderItervalId);
+      clearInterval(recieverItervalId);
     }
-  }
+  });
 });
 
-chrome.tabs.query({}, function(tabs) {
-  const pinnedTabs = tabs.filter(tab => tab.pinned);
-  console.log('Pinned tabs:', pinnedTabs);
-});

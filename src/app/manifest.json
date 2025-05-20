@@ -32,7 +32,7 @@
         "https://www.upwork.com/ab/messages/rooms/*"
       ],
       "js": [
-        "upwork_sender_reciever_script.bundle.js"
+        "upwork_sender_script.bundle.js"
       ]
     }
   ],
