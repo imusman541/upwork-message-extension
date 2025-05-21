@@ -1,3 +1,4 @@
+/* eslint-disable no-constant-condition */
 import { createRoot } from 'react-dom/client';
 
 import Connect from '../../components/upwork/connect-sender';
@@ -54,11 +55,19 @@ const SaveSenderMessagesInStorage = async () => {
       await waitForSelector(document, 'div[class="desktop-room"]');
 
       const desktopRoom = document.querySelector('div[class="desktop-room"]');
-      const allMessages = desktopRoom.querySelectorAll('div[class="up-d-message"]');
-      const allMessagesDiv = [...allMessages];
-      console.log('\n allMessagesDiv', allMessagesDiv.length);
-      let lastMessages = allMessagesDiv.slice(-newMessagesCount);
-      lastMessages = lastMessages.map((obj) => obj.innerText);
+      const allMessagesSections = desktopRoom.querySelectorAll('div[class="story-section"]');
+      const allMessagesDiv = [];
+      for (let i = 0; i < allMessagesSections.length; i += 1) {
+        const messageSection = allMessagesSections[i];
+        const textMessage = messageSection.querySelector('div[class="up-d-message"]')?.innerText;
+        const imageMessage = messageSection.querySelector('img')?.getAttribute('src');
+        if (textMessage) allMessagesDiv.push(textMessage);
+        if (imageMessage) allMessagesDiv.push(imageMessage);
+      }
+      // const allMessages = desktopRoom.querySelectorAll('div[class="up-d-message"]');
+      // const allMessagesDiv = [...allMessages];
+      console.log('\n allMessagesDiv', allMessagesDiv.length, allMessagesDiv);
+      const lastMessages = allMessagesDiv.slice(-30);
       console.log('\n lastMessages', lastMessages);
       if (lastMessages.length) {
         await setLocal(`sender-messages-${senderRoomId}`, lastMessages);
@@ -69,6 +78,16 @@ const SaveSenderMessagesInStorage = async () => {
   }
 };
 
+const uploadFile = async (fileInput, file) => {
+  const dataTransfer = new DataTransfer(); // Create a new DataTransfer object
+  dataTransfer.items.add(file); // Add the file to the dataTransfer object
+  fileInput.files = dataTransfer.files; // Assign the files to the input element
+
+  // Trigger change event to simulate the user selecting the file
+  const event = new Event('change', { bubbles: true });
+  await fileInput.dispatchEvent(event);
+};
+
 const SendSenderMessagesToReciever = async (recieverRoom, recieverRoomId) => {
   try {
     const senderRoomId = await getLocal(recieverRoomId);
@@ -77,14 +96,45 @@ const SendSenderMessagesToReciever = async (recieverRoom, recieverRoomId) => {
       console.log('\n senderMessages', senderMessages);
       recieverRoom.click();
       await sleep(2);
-  
+      
       const desktopRoom = document.querySelector('div[class="desktop-room"]');
       for (let i = 0; i < senderMessages.length; i += 1) {
         await sleep(2);
-
+        
         const message = senderMessages[i];
         console.log('\n message', message);
         const input = desktopRoom.querySelector('div.input-area').querySelector('p');
+        if (message.includes('messages/att')) {
+          const response = await fetch(senderMessages[i]);
+          const blob = await response.blob();
+          const file = new File([blob], 'my-image.jpg', { type: 'image/jpeg' });
+          const fileInput = desktopRoom.querySelector('input[id="file-upload"]');
+          await uploadFile(fileInput, file);
+          await sleep(3);
+          while (true) {
+            const uploading = desktopRoom.querySelector('div[class*="uploading"]');
+            if (!uploading) break;
+            await sleep(2);
+          }
+
+          if (input) {
+            console.log('\n enter event');
+            const event = new KeyboardEvent('keydown', {
+              key: 'Enter',
+              code: 'Enter',
+              keyCode: 13,
+              which: 13,
+              bubbles: true,
+              cancelable: true
+            });
+  
+            input.dispatchEvent(event);
+          } else {
+            console.log('\n input not found');
+          }
+          continue;
+        }
+
         desktopRoom.querySelector('div.input-area').querySelector('p').innerText = message;
 
         await sleep(1);
@@ -127,7 +177,7 @@ const UpworkSender = async () => {
       newDiv.id = 'main-product-info-div';
   
       const root = createRoot(newDiv);
-      root.render(<Connect senderRoomId={upworkCustomers[i].getAttribute('id')}/>);
+      root.render(<Connect senderRoomId={upworkCustomers[i].getAttribute('id')} />);
   
       upworkCustomers[i].appendChild(newDiv);
       upworkCustomers[i].parentNode.insertBefore(newDiv, upworkCustomers[i].nextSibling);
@@ -189,18 +239,9 @@ const SenderScript = async () => {
     if (extensionEnabled) {
       const currentUrl = document.location.href;
       if (currentUrl.includes(senderCompanyReferenceId)) {
-        const senderItervalId = await getLocal('sender-interval-id');
-        if (senderItervalId) {
-          clearInterval(senderItervalId);
-          await setLocal('sender-interval-id', null);
-          await sleep(2);
-        }
-        const intervalId = setInterval(async () => {
+        while(true) {
           await UpworkSender();
-        }, 5000);
-
-        console.log('\n sender intervalId', intervalId);
-        await setLocal('sender-interval-id', intervalId);
+        }
       }
     } else {
       console.log('\n Upwork Message Extension is not enabled');
@@ -218,18 +259,9 @@ const RecieverScript = async () => {
     if (extensionEnabled) {
       const currentUrl = document.location.href;
       if (currentUrl.includes(recieverCompanyReferenceId)) {
-        const recieverItervalId = await getLocal('reciever-interval-id');
-        if (recieverItervalId) {
-          clearInterval(recieverItervalId);
-          await setLocal('reciever-interval-id', null);
-          await sleep(2);
-        }
-
-        const intervalId = setInterval(async () => {
+        while(true) {
           await UpworkReciever();
-        }, 5000);
-
-        await setLocal('reciever-interval-id', intervalId);
+        }
       }
     } else {
       console.log('\n Upwork Message Extension is not enabled');

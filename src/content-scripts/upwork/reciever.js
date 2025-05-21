@@ -1,6 +1,6 @@
 import * as Callbacks from '../../services/helpers/contentScript';
 
-console.log('In Content script...');
+console.log('In Reciever Content script...');
 
 chrome.runtime.onMessage.addListener((req) => {
   try {

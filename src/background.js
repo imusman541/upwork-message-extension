@@ -48,11 +48,15 @@ chrome.runtime.onInstalled.addListener(async () => {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   try {
-    if (request.callback === 'openTab') {
+    if (request.callback === 'fetch-image-response') {
       (async () => {
         try {
-          const res = await chrome.tabs.create(request.payload);
-          sendResponse(res);
+          const response = await fetch(request.payload.url);
+          const blob = await response.blob();
+          sendResponse({
+            success: true,
+            data: blob
+          });
         } catch (error) {
           sendResponse({
             success: false,
@@ -84,49 +88,34 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   //     console.log('\n not on the correct store', url);
   //   }
   // }
-  chrome.tabs.query({}, async (tabs) => {
-    const pinnedTabs = tabs.filter(tab => tab.pinned);
+});
+
+const processedTabs = {};
+chrome.tabs.query({}, async (tabs) => {
+  const pinnedTabs = tabs.filter(tab => tab.pinned);
+  
+  if (pinnedTabs?.length) {
+    console.log('processedTabs:', processedTabs);
     console.log('Pinned tabs:', pinnedTabs);
-  
-    if (pinnedTabs?.length) {
-      const url1 = pinnedTabs[0].url;
-      const url2 = pinnedTabs[1].url;
-  
+    for (const tab of pinnedTabs) {
+      if (processedTabs[tab.id]) continue;
       const senderCompanyReferenceId = await getLocal('sender-company-reference-id');
       const recieverCompanyReferenceId = await getLocal('reciever-company-reference-id');
   
-      if (url1.includes(senderCompanyReferenceId)) {
+      if (tab.url.includes(senderCompanyReferenceId)) {
         chrome.scripting.executeScript({
-          target: { tabId: pinnedTabs[0].id },
+          target: { tabId: tab.id },
           files: ['upwork_sender_script.bundle.js']
         });
-      } else if (url1.includes(recieverCompanyReferenceId)) {
+        processedTabs[tab.id] = true;
+      } else if (tab.url.includes(recieverCompanyReferenceId)) {
         chrome.scripting.executeScript({
-          target: { tabId: pinnedTabs[0].id },
+          target: { tabId: tab.id },
           files: ['upwork_reciever_script.bundle.js']
         });
+        processedTabs[tab.id] = true;
       } 
-
-      if (url2.includes(senderCompanyReferenceId)) {
-        chrome.scripting.executeScript({
-          target: { tabId: pinnedTabs[1].id },
-          files: ['upwork_sender_script.bundle.js']
-        });
-      } else if (url2.includes(recieverCompanyReferenceId)) {
-        chrome.scripting.executeScript({
-          target: { tabId: pinnedTabs[1].id },
-          files: ['upwork_reciever_script.bundle.js']
-        });
-      }
-  
-      const senderItervalId = await getLocal('sender-interval-id');
-      console.log('\n senderItervalId', senderItervalId);
-      const recieverItervalId = await getLocal('reciever-interval-id');
-      console.log('\n recieverItervalId', recieverItervalId);
-  
-      clearInterval(senderItervalId);
-      clearInterval(recieverItervalId);
     }
-  });
+  }
 });
 

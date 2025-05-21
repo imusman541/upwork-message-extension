@@ -26,16 +26,6 @@
     "38": "images/upwork-logo.png",
     "128": "images/upwork-logo.png"
   },
-  "content_scripts": [
-    {
-      "matches": [
-        "https://www.upwork.com/ab/messages/rooms/*"
-      ],
-      "js": [
-        "upwork_sender_script.bundle.js"
-      ]
-    }
-  ],
   "host_permissions": [
     "<all_urls>"
   ],
