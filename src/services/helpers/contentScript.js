@@ -60,6 +60,9 @@ const SaveSenderMessagesInStorage = async () => {
       for (let i = 0; i < allMessagesSections.length; i += 1) {
         const messageSection = allMessagesSections[i];
         const textMessage = messageSection.querySelector('div[class="up-d-message"]')?.innerText;
+
+        if (textMessage.startsWith('NTF')) continue;
+
         const imageMessage = messageSection.querySelector('img')?.getAttribute('src');
         if (textMessage) allMessagesDiv.push(textMessage);
         if (imageMessage) allMessagesDiv.push(imageMessage);
@@ -107,10 +110,27 @@ const SendSenderMessagesToReciever = async (recieverRoom, recieverRoomId) => {
         if (message.includes('messages/att')) {
           const response = await fetch(senderMessages[i]);
           const blob = await response.blob();
-          const file = new File([blob], 'my-image.jpg', { type: 'image/jpeg' });
+          const url = response.url;
+          const urlObj = new URL(url);
+          const params = new URLSearchParams(urlObj.search);
+
+          const contentDisposition = params.get('response-content-disposition');
+
+          let fileName = null;
+          if (contentDisposition) {
+            const match = contentDisposition.match(/filename\*?=(?:utf-8'')?([^;&]+)/i);
+            if (match && match[1]) {
+              fileName = decodeURIComponent(match[1].replace(/"/g, ''));
+            }
+          }
+
+          console.log('fileName', fileName);
+          const file = new File([blob], fileName, { type: 'application/octet-stream' });
           const fileInput = desktopRoom.querySelector('input[id="file-upload"]');
+
           await uploadFile(fileInput, file);
           await sleep(3);
+
           while (true) {
             const uploading = desktopRoom.querySelector('div[class*="uploading"]');
             if (!uploading) break;
@@ -137,7 +157,7 @@ const SendSenderMessagesToReciever = async (recieverRoom, recieverRoomId) => {
 
         desktopRoom.querySelector('div.input-area').querySelector('p').innerText = message;
 
-        await sleep(1);
+        await sleep(2);
 
         if (input) {
           console.log('\n enter event');

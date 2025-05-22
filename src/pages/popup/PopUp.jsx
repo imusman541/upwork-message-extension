@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Switch, Input, Space, Button, Typography, notification } from 'antd';
+import {
+  Button,
+  Input,
+  Space,
+  Typography,
+  notification
+} from 'antd';
 
 import { getLocal, setLocal } from '../../services/dbService';
 
@@ -7,7 +13,7 @@ const { Title } = Typography;
 
 const PopupComponent = () => {
   const [settingsObj, setSettingsObj] = useState({
-    checked: false,
+    startTheScript: false,
     senderReference: '',
     recieverReference: ''
   });
@@ -27,7 +33,7 @@ const PopupComponent = () => {
     const recieverCompanyReferenceId = await getLocal('reciever-company-reference-id');
 
     setSettingsObj({
-      checked: extensionEnabled || false,
+      startTheScript: extensionEnabled || false,
       senderReference: senderCompanyReferenceId || '',
       recieverReference: recieverCompanyReferenceId || ''
     });
@@ -48,7 +54,15 @@ const PopupComponent = () => {
       return;
     }
 
-    if (key === 'checked') await setLocal('extension-enabled', value);
+    if (key === 'startTheScript') {
+      await setLocal('extension-enabled', value);
+
+      await chrome.runtime.sendMessage({
+        payload: {},
+        callback: 'start-the-script'
+      });
+    }
+
     if (key === 'senderReference') await setLocal('sender-company-reference-id', value);
     if (key === 'recieverReference') await setLocal('reciever-company-reference-id', value);
   };
@@ -80,13 +94,13 @@ const PopupComponent = () => {
         size='middle'
         style={{ width: '100%' }}
       >
-        <Switch
-          checkedChildren='Enabled'
-          unCheckedChildren='Disabled'
-          checked={settingsObj.checked}
-          onChange={(e) => handleSettingsChromeLocal('checked', e)}
-        />
-        
+        <Button
+          type='primary'
+          onClick={() => handleSettingsChromeLocal('startTheScript', settingsObj.startTheScript ? false : true)}
+          style={{ backgroundColor: settingsObj.startTheScript ? 'red' : 'green' }}
+        >
+          {settingsObj.startTheScript ? 'Stop' : 'Start'}
+        </Button>
         <Input 
           placeholder='Enter sender company reference' 
           value={settingsObj.senderReference}
