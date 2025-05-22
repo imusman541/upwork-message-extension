@@ -96,11 +96,11 @@ const SendSenderMessagesToReciever = async (recieverRoom, recieverRoomId) => {
       console.log('\n senderMessages', senderMessages);
       recieverRoom.click();
       await sleep(2);
-      
+
       const desktopRoom = document.querySelector('div[class="desktop-room"]');
       for (let i = 0; i < senderMessages.length; i += 1) {
         await sleep(2);
-        
+
         const message = senderMessages[i];
         console.log('\n message', message);
         const input = desktopRoom.querySelector('div.input-area').querySelector('p');
@@ -127,7 +127,7 @@ const SendSenderMessagesToReciever = async (recieverRoom, recieverRoomId) => {
               bubbles: true,
               cancelable: true
             });
-  
+
             input.dispatchEvent(event);
           } else {
             console.log('\n input not found');
@@ -149,7 +149,7 @@ const SendSenderMessagesToReciever = async (recieverRoom, recieverRoomId) => {
             bubbles: true,
             cancelable: true
           });
-  
+
           input.dispatchEvent(event);
         } else {
           console.log('\n input not found');
@@ -169,20 +169,20 @@ const UpworkSender = async () => {
     await waitForSelector(document, 'a[data-test="room-list-item"]');
     const upworkCustomers = document.querySelectorAll('a[data-test="room-list-item"]:not([articlecovered])');
     console.log('\n upworkCustomers', upworkCustomers.length);
-  
+
     for (let i = 0; i < upworkCustomers.length; i += 1) {
       upworkCustomers[i]?.setAttribute('articleCovered', true);
-  
+
       const newDiv = document.createElement('div');
       newDiv.id = 'main-product-info-div';
-  
+
       const root = createRoot(newDiv);
       root.render(<Connect senderRoomId={upworkCustomers[i].getAttribute('id')} />);
-  
+
       upworkCustomers[i].appendChild(newDiv);
       upworkCustomers[i].parentNode.insertBefore(newDiv, upworkCustomers[i].nextSibling);
     }
-  
+
     await SaveSenderMessagesInStorage();
   } catch (error) {
     alert(error.message);
@@ -195,13 +195,13 @@ const UpworkReciever = async () => {
     await waitForSelector(document, 'a[data-test="room-list-item"]');
     const upworkRecievers = document.querySelectorAll('a[data-test="room-list-item"]:not([articlecovered])');
     console.log('\n upworkRecievers', upworkRecievers.length);
-  
+
     const recieverRoomIds = [];
     const roomIds = [];
     for (let i = 0; i < upworkRecievers.length; i += 1) {
       const recieverRoomId = upworkRecievers[i].getAttribute('id');
       const roomName = upworkRecievers[i].querySelector('div.header-row').querySelector('h4').innerText;
-  
+
       const alreadyMapped = await getLocal(recieverRoomId);
       if (!alreadyMapped) {
         recieverRoomIds.push({
@@ -215,14 +215,14 @@ const UpworkReciever = async () => {
         });
       }
     }
-  
+
     console.log('\n recieverRoomIds', recieverRoomIds);
     if (recieverRoomIds.length) {
       await setLocal('reciever-room-ids', recieverRoomIds);
     } else {
       await setLocal('reciever-room-ids', []);
     }
-  
+
     for (let i = 0; i < roomIds.length; i += 1) {
       await SendSenderMessagesToReciever(roomIds[i].room, roomIds[i].recieverRoomId);
     }
@@ -233,18 +233,19 @@ const UpworkReciever = async () => {
 
 const SenderScript = async () => {
   try {
-    const senderCompanyReferenceId = await getLocal('sender-company-reference-id');
-    const extensionEnabled = await getLocal('extension-enabled');
+    while (true) {
+      const senderCompanyReferenceId = await getLocal('sender-company-reference-id');
+      const extensionEnabled = await getLocal('extension-enabled');
 
-    if (extensionEnabled) {
-      const currentUrl = document.location.href;
-      if (currentUrl.includes(senderCompanyReferenceId)) {
-        while(true) {
+      if (extensionEnabled) {
+        const currentUrl = document.location.href;
+        if (currentUrl.includes(senderCompanyReferenceId)) {
           await UpworkSender();
         }
+      } else {
+        console.log('\n Upwork Message Extension is not enabled');
+        return;
       }
-    } else {
-      console.log('\n Upwork Message Extension is not enabled');
     }
   } catch (error) {
     alert(error.message);
@@ -253,18 +254,19 @@ const SenderScript = async () => {
 
 const RecieverScript = async () => {
   try {
-    const recieverCompanyReferenceId = await getLocal('reciever-company-reference-id');
-    const extensionEnabled = await getLocal('extension-enabled');
+    while (true) {
+      const recieverCompanyReferenceId = await getLocal('reciever-company-reference-id');
+      const extensionEnabled = await getLocal('extension-enabled');
 
-    if (extensionEnabled) {
-      const currentUrl = document.location.href;
-      if (currentUrl.includes(recieverCompanyReferenceId)) {
-        while(true) {
+      if (extensionEnabled) {
+        const currentUrl = document.location.href;
+        if (currentUrl.includes(recieverCompanyReferenceId)) {
           await UpworkReciever();
         }
+      } else {
+        console.log('\n Upwork Message Extension is not enabled');
+        return;
       }
-    } else {
-      console.log('\n Upwork Message Extension is not enabled');
     }
   } catch (error) {
     alert(error.message);
