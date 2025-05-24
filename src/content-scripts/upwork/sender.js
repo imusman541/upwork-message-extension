@@ -4,7 +4,10 @@ import { setLocal } from '../../services/dbService';
 console.log('In Sender Content script...');
 
 window.addEventListener('beforeunload', async () => {
-  await setLocal('extension-enabled', false);
+  chrome.runtime.sendMessage({
+    payload: {},
+    callback: 'stop-the-script'
+  });
 });
 
 chrome.runtime.onMessage.addListener((req) => {

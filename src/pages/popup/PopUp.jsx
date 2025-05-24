@@ -40,31 +40,27 @@ const PopupComponent = () => {
   };
 
   const handleSettingsChromeLocal = async (key, value) => {
-    setSettingsObj({
-      ...settingsObj,
-      [key]: value
-    });
-
-    if (key === 'senderReference' && !value) {
-      openNotification('Sender Company Reference ID', 'Sender Company Reference ID can not be empty');
-      return;
-    }
-    if (key === 'recieverReference' && !value) {
-      openNotification('Reciever Company Reference ID', 'Reciever Company Reference ID can not be empty');
-      return;
-    }
-
     if (key === 'startTheScript') {
+      if (!settingsObj.senderReference || !settingsObj.recieverReference) {
+        openNotification('Error', 'Sender/Receiver Company Reference ID can not be empty');
+        return;
+      }
       await setLocal('extension-enabled', value);
 
-      await chrome.runtime.sendMessage({
-        payload: {},
-        callback: 'start-the-script'
-      });
+      if (value) {
+        await chrome.runtime.sendMessage({
+          payload: {},
+          callback: 'start-the-script'
+        });
+      }
     }
 
     if (key === 'senderReference') await setLocal('sender-company-reference-id', value);
     if (key === 'recieverReference') await setLocal('reciever-company-reference-id', value);
+    setSettingsObj({
+      ...settingsObj,
+      [key]: value
+    });
   };
 
   useEffect(() => {
@@ -88,7 +84,7 @@ const PopupComponent = () => {
       >
         Settings
       </Title>
-      
+
       <Space
         direction='vertical'
         size='middle'
@@ -101,25 +97,19 @@ const PopupComponent = () => {
         >
           {settingsObj.startTheScript ? 'Stop' : 'Start'}
         </Button>
-        <Input 
-          placeholder='Enter sender company reference' 
+        <Input
+          placeholder='Enter sender company reference'
           value={settingsObj.senderReference}
+          disabled={settingsObj.startTheScript}
           onChange={(e) => handleSettingsChromeLocal('senderReference', e.target.value)}
         />
-        
-        <Input 
-          placeholder='Enter receiver company reference' 
+
+        <Input
+          placeholder='Enter receiver company reference'
           value={settingsObj.recieverReference}
+          disabled={settingsObj.startTheScript}
           onChange={(e) => handleSettingsChromeLocal('recieverReference', e.target.value)}
         />
-        
-        {/* <Button
-          type='primary'
-          onClick={handleSettingsChromeLocal}
-          style={{ width: '100%' }}
-        >
-          Save
-        </Button> */}
       </Space>
     </div>
   );

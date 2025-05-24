@@ -59,18 +59,25 @@ const SaveSenderMessagesInStorage = async () => {
       const allMessagesDiv = [];
       for (let i = 0; i < allMessagesSections.length; i += 1) {
         const messageSection = allMessagesSections[i];
+        // text message
         const textMessage = messageSection.querySelector('div[class="up-d-message"]')?.innerText;
-
-        if (textMessage.startsWith('NTF')) continue;
-
-        const imageMessage = messageSection.querySelector('img')?.getAttribute('src');
+        if (textMessage?.startsWith('NTF')) continue;
         if (textMessage) allMessagesDiv.push(textMessage);
+
+        // image
+        const imageMessage = messageSection.querySelector('img')?.getAttribute('src');
         if (imageMessage) allMessagesDiv.push(imageMessage);
+
+        // file
+        const isAttachment = messageSection.querySelector('.files-toggle');
+        if (isAttachment) {
+          const fileSpan = messageSection.querySelector('.file-name');
+          const fileUrl = fileSpan?.querySelector('a')?.href || '';
+          if (fileUrl) allMessagesDiv.push(fileUrl);
+        }
       }
-      // const allMessages = desktopRoom.querySelectorAll('div[class="up-d-message"]');
-      // const allMessagesDiv = [...allMessages];
       console.log('\n allMessagesDiv', allMessagesDiv.length, allMessagesDiv);
-      const lastMessages = allMessagesDiv.slice(-30);
+      const lastMessages = allMessagesDiv.slice(-newMessagesCount);
       console.log('\n lastMessages', lastMessages);
       if (lastMessages.length) {
         await setLocal(`sender-messages-${senderRoomId}`, lastMessages);
@@ -251,8 +258,17 @@ const UpworkReciever = async () => {
   }
 };
 
+const updateTabIcon = (url) => {
+  const link = document.querySelector('link[rel~=\'icon\']') || document.createElement('link');
+  link.rel = 'icon';
+  link.href = url;
+  document.head.appendChild(link);
+};
+
 const SenderScript = async () => {
   try {
+    // change tab icon
+    updateTabIcon('https://i.pinimg.com/736x/e2/29/50/e22950b0a26db427c651dccba60ab62c.jpg');
     while (true) {
       const senderCompanyReferenceId = await getLocal('sender-company-reference-id');
       const extensionEnabled = await getLocal('extension-enabled');
@@ -261,9 +277,11 @@ const SenderScript = async () => {
         const currentUrl = document.location.href;
         if (currentUrl.includes(senderCompanyReferenceId)) {
           await UpworkSender();
+          await sleep(2);
         }
       } else {
         console.log('\n Upwork Message Extension is not enabled');
+        updateTabIcon('https://www.citypng.com/public/uploads/preview/red-dot-circle-icon-transparent-background-701751694972430m9tnpqnwnd.png');
         return;
       }
     }
@@ -274,6 +292,7 @@ const SenderScript = async () => {
 
 const RecieverScript = async () => {
   try {
+    updateTabIcon('https://i.pinimg.com/736x/e2/29/50/e22950b0a26db427c651dccba60ab62c.jpg');
     while (true) {
       const recieverCompanyReferenceId = await getLocal('reciever-company-reference-id');
       const extensionEnabled = await getLocal('extension-enabled');
@@ -282,9 +301,11 @@ const RecieverScript = async () => {
         const currentUrl = document.location.href;
         if (currentUrl.includes(recieverCompanyReferenceId)) {
           await UpworkReciever();
+          await sleep(2);
         }
       } else {
         console.log('\n Upwork Message Extension is not enabled');
+        updateTabIcon('https://www.citypng.com/public/uploads/preview/red-dot-circle-icon-transparent-background-701751694972430m9tnpqnwnd.png');
         return;
       }
     }
