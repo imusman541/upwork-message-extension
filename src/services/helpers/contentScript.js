@@ -30,7 +30,6 @@ const updateTitle = () => {
 const SaveSenderMessagesInStorage = async () => {
   await waitForSelector(document, 'a[data-test="room-list-item"]');
   const upworkCustomers = document.querySelectorAll('a[data-test="room-list-item"]');
-  console.log('\n upworkCustomers', upworkCustomers.length);
 
   const saveMessagesForCustomer = [];
   for (let i = 0; i < upworkCustomers.length; i += 1) {
@@ -57,11 +56,14 @@ const SaveSenderMessagesInStorage = async () => {
       const desktopRoom = document.querySelector('div[class="desktop-room"]');
       const allMessagesSections = desktopRoom.querySelectorAll('div[class="story-section"]');
       const allMessagesDiv = [];
+
       for (let i = 0; i < allMessagesSections.length; i += 1) {
         const messageSection = allMessagesSections[i];
         // text message
         const textMessage = messageSection.querySelector('div[class="up-d-message"]')?.innerText;
+
         if (textMessage?.startsWith('NTF')) continue;
+
         if (textMessage) allMessagesDiv.push(textMessage);
 
         // image
@@ -76,12 +78,20 @@ const SaveSenderMessagesInStorage = async () => {
           if (fileUrl) allMessagesDiv.push(fileUrl);
         }
       }
+
       console.log('\n allMessagesDiv', allMessagesDiv.length, allMessagesDiv);
       const lastMessages = allMessagesDiv.slice(-newMessagesCount);
       console.log('\n lastMessages', lastMessages);
       if (lastMessages.length) {
         await setLocal(`sender-messages-${senderRoomId}`, lastMessages);
       }
+
+      let moveToChat = i;
+      if (moveToChat === 0) moveToChat += 1;
+      else moveToChat -= 1;
+
+      upworkCustomers[moveToChat].click();
+      await sleep(2);
     } else {
       console.log('\n No new messages');
     }
@@ -195,7 +205,7 @@ const UpworkSender = async () => {
     console.log('\n Upwork Sender Script is going to run');
     await waitForSelector(document, 'a[data-test="room-list-item"]');
     const upworkCustomers = document.querySelectorAll('a[data-test="room-list-item"]:not([articlecovered])');
-    console.log('\n upworkCustomers', upworkCustomers.length);
+    console.log('\n upworkCustomers', upworkCustomers[1], upworkCustomers.length);
 
     for (let i = 0; i < upworkCustomers.length; i += 1) {
       upworkCustomers[i]?.setAttribute('articleCovered', true);
@@ -204,10 +214,16 @@ const UpworkSender = async () => {
       newDiv.id = 'main-product-info-div';
 
       const root = createRoot(newDiv);
-      root.render(<Connect senderRoomId={upworkCustomers[i].getAttribute('id')} />);
-
-      upworkCustomers[i].appendChild(newDiv);
-      upworkCustomers[i].parentNode.insertBefore(newDiv, upworkCustomers[i].nextSibling);
+      const url = upworkCustomers[i].href;
+      const match = url.match(/room_[a-z0-9]+/i);
+      if (match) {
+        const roomId = match[0];
+        console.log('roomId', roomId);
+        root.render(<Connect senderRoomId={roomId} />);
+  
+        upworkCustomers[i].appendChild(newDiv);
+        upworkCustomers[i].parentNode.insertBefore(newDiv, upworkCustomers[i].nextSibling);
+      }
     }
 
     await SaveSenderMessagesInStorage();

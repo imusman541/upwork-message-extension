@@ -24,12 +24,25 @@ const Connect = ({ senderRoomId }) => {
     }
   };
 
-  const handleClick = async (e) => {
-    setIsModalOpen(!isModalOpen);
-    fetchRecieverData();
+  const handleClick = async (e, senderRoomId) => {
+    const senderRecievingMapId = await getLocal(senderRoomId);
 
-    e.stopPropagation();
-    e.preventDefault();
+    if (!senderRecievingMapId) {
+      setIsModalOpen(!isModalOpen);
+      fetchRecieverData();
+  
+      e.stopPropagation();
+      e.preventDefault();
+    } else {
+      const senderRecievingMapId = await getLocal(senderRoomId);
+
+      setSelectedValue('');
+      setAlreadyMapped(false);
+
+      await setLocal(senderRoomId, null);
+      await setLocal(senderRecievingMapId, null);
+      await setLocal(`sender-messages-${senderRoomId}`, []);
+    }
   };
 
   const handleOk = async () => {
@@ -71,12 +84,11 @@ const Connect = ({ senderRoomId }) => {
       >
         <Button
           style={{
-            backgroundColor: alreadyMapped ? 'green' : 'white'
+            backgroundColor: alreadyMapped ? 'red' : 'white'
           }}
-          onClick={handleClick}
-          disabled={alreadyMapped}
+          onClick={(e) => handleClick(e, senderRoomId)}
         >
-          {alreadyMapped ? 'Connected' : 'Connect'}
+          {alreadyMapped ? 'Disconnect' : 'Connect'}
         </Button>
       </div>
       <Modal
