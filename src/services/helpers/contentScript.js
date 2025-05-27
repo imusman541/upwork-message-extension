@@ -73,9 +73,10 @@ const SaveSenderMessagesInStorage = async () => {
         // file
         const isAttachment = messageSection.querySelector('.files-toggle');
         if (isAttachment) {
-          const fileSpan = messageSection.querySelector('.file-name');
-          const fileUrl = fileSpan?.querySelector('a')?.href || '';
-          if (fileUrl) allMessagesDiv.push(fileUrl);
+          const fileSpans = messageSection.querySelectorAll('.file-name');
+          const fileSpan = [...fileSpans];
+          const fileUrls = fileSpan?.map((obj) => obj.querySelector('a')?.href || '');
+          if (fileUrls?.length) allMessagesDiv.push(...fileUrls);
         }
       }
 
