@@ -47,6 +47,9 @@ const SaveSenderMessagesInStorage = async () => {
     const senderRoomId = saveMessagesForCustomer[i].getAttribute('id');
     let newMessagesCount = saveMessagesForCustomer[i].querySelector('div[class*="item-indicators"]')?.innerText;
     console.log('\n newMessagesCount', newMessagesCount);
+    await sleep(10);
+    newMessagesCount = saveMessagesForCustomer[i].querySelector('div[class*="item-indicators"]')?.innerText;
+
     if (newMessagesCount) {
       newMessagesCount = Number(newMessagesCount);
       console.log('\n newMessagesCount', newMessagesCount);
@@ -75,21 +78,23 @@ const SaveSenderMessagesInStorage = async () => {
         }
         const attachments = [];
 
-        // image
-        const imageMessage = messageSection.querySelector('img')?.getAttribute('src');
-        if (imageMessage) {
-          // allMessagesDiv.push(imageMessage);
-          attachments.push(imageMessage);
-        }
-
         // file
         const isAttachment = messageSection.querySelector('.files-toggle');
         if (isAttachment) {
           const fileSpans = messageSection.querySelectorAll('.file-name');
-          const fileSpan = [...fileSpans];
-          const fileUrls = fileSpan?.map((obj) => obj.querySelector('a')?.href || '');
-          if (fileUrls?.length) attachments.push(...fileUrls);
+          let fileSpan = [];
+          if (fileSpans?.length) {
+            fileSpan = [...fileSpans];
+            const fileUrls = fileSpan?.map((obj) => obj.querySelector('a')?.href || '');
+            if (fileUrls?.length) attachments.push(...fileUrls);
+          } else {
+            const imageMessage = messageSection.querySelector('img')?.getAttribute('src');
+            if (imageMessage) {
+              attachments.push(imageMessage);
+            }
+          }
         }
+
         extend(message, { attachments });
 
         allMessagesDiv.push(message);
@@ -106,8 +111,8 @@ const SaveSenderMessagesInStorage = async () => {
       if (moveToChat === 0) moveToChat += 1;
       else moveToChat -= 1;
 
-      upworkCustomers[moveToChat].click();
-      await sleep(2);
+      upworkCustomers[upworkCustomers?.length - 1].click();
+      await sleep(10);
     } else {
       console.log('\n No new messages');
     }
@@ -137,15 +142,17 @@ const SendSenderMessagesToReciever = async (recieverRoom, recieverRoomId) => {
       for (let i = 0; i < senderMessages.length; i += 1) {
         await sleep(2);
 
-        // const message = senderMessages[i];
         const senderMessage = senderMessages[i];
         console.log('\n message', message);
         const {
           message = '',
           attachments = []
         } = senderMessage || {};
+
         const input = desktopRoom.querySelector('div.input-area').querySelector('p');
-        for (let i = 0; i < attachments.length; i++) {
+        desktopRoom.querySelector('div.input-area').querySelector('p').innerText = message;
+
+        for (let i = 0; i < attachments.length; i += 1) {
           const attachment = attachments[i];
           const response = await fetch(attachment);
           const blob = await response.blob();
@@ -176,27 +183,19 @@ const SendSenderMessagesToReciever = async (recieverRoom, recieverRoomId) => {
             await sleep(2);
           }
 
-          if (input) {
-            console.log('\n enter event');
-            const event = new KeyboardEvent('keydown', {
-              key: 'Enter',
-              code: 'Enter',
-              keyCode: 13,
-              which: 13,
-              bubbles: true,
-              cancelable: true
-            });
-
-            input.dispatchEvent(event);
-          } else {
-            console.log('\n input not found');
-          }
           continue;
         }
 
-        desktopRoom.querySelector('div.input-area').querySelector('p').innerText = message;
-
         await sleep(2);
+
+        let disabled;
+        while (true) {
+          const sendButton = desktopRoom.querySelector('button[data-cy="send-message"]');
+          disabled = sendButton.getAttribute('disabled');
+
+          await sleep(2);
+          if (!disabled) break;
+        }
 
         if (input) {
           console.log('\n enter event');
