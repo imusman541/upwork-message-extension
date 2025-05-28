@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import Connect from '../../components/upwork/connect-sender';
 import { getLocal, setLocal } from '../dbService';
 import { sleep } from '../utils';
+import { extend } from 'lodash';
 
 const waitForSelector = async (document, element) => new Promise((resolve) => {
   let selector;
@@ -64,11 +65,22 @@ const SaveSenderMessagesInStorage = async () => {
 
         if (textMessage?.startsWith('NTF')) continue;
 
-        if (textMessage) allMessagesDiv.push(textMessage);
+        const message = {};
+
+        if (textMessage) {
+          // allMessagesDiv.push(textMessage);
+          extend(message, {
+            message: textMessage
+          });
+        }
+        const attachments = [];
 
         // image
         const imageMessage = messageSection.querySelector('img')?.getAttribute('src');
-        if (imageMessage) allMessagesDiv.push(imageMessage);
+        if (imageMessage) {
+          // allMessagesDiv.push(imageMessage);
+          attachments.push(imageMessage);
+        }
 
         // file
         const isAttachment = messageSection.querySelector('.files-toggle');
@@ -76,8 +88,11 @@ const SaveSenderMessagesInStorage = async () => {
           const fileSpans = messageSection.querySelectorAll('.file-name');
           const fileSpan = [...fileSpans];
           const fileUrls = fileSpan?.map((obj) => obj.querySelector('a')?.href || '');
-          if (fileUrls?.length) allMessagesDiv.push(...fileUrls);
+          if (fileUrls?.length) attachments.push(...fileUrls);
         }
+        extend(message, { attachments });
+
+        allMessagesDiv.push(message);
       }
 
       console.log('\n allMessagesDiv', allMessagesDiv.length, allMessagesDiv);
@@ -122,11 +137,17 @@ const SendSenderMessagesToReciever = async (recieverRoom, recieverRoomId) => {
       for (let i = 0; i < senderMessages.length; i += 1) {
         await sleep(2);
 
-        const message = senderMessages[i];
+        // const message = senderMessages[i];
+        const senderMessage = senderMessages[i];
         console.log('\n message', message);
+        const {
+          message = '',
+          attachments = []
+        } = senderMessage || {};
         const input = desktopRoom.querySelector('div.input-area').querySelector('p');
-        if (message.includes('messages/att')) {
-          const response = await fetch(senderMessages[i]);
+        for (let i = 0; i < attachments.length; i++) {
+          const attachment = attachments[i];
+          const response = await fetch(attachment);
           const blob = await response.blob();
           const url = response.url;
           const urlObj = new URL(url);
@@ -221,7 +242,7 @@ const UpworkSender = async () => {
         const roomId = match[0];
         console.log('roomId', roomId);
         root.render(<Connect senderRoomId={roomId} />);
-  
+
         upworkCustomers[i].appendChild(newDiv);
         upworkCustomers[i].parentNode.insertBefore(newDiv, upworkCustomers[i].nextSibling);
       }
