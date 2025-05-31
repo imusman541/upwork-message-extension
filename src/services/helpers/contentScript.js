@@ -58,7 +58,12 @@ const SaveSenderMessagesInStorage = async () => {
       await waitForSelector(document, 'div[class="desktop-room"]');
 
       const desktopRoom = document.querySelector('div[class="desktop-room"]');
-      const allMessagesSections = desktopRoom.querySelectorAll('div[class="story-section"]');
+      let allMessagesSections = desktopRoom.querySelectorAll('div[class*="story-inner"]');
+      allMessagesSections = [...allMessagesSections];
+      const reversedIndex = [...allMessagesSections].reverse().findIndex(obj => obj.classList.contains('is-favorite-story'));
+      if (reversedIndex === -1) continue;
+      const lastIndex = allMessagesSections.length - 1 - reversedIndex;
+      allMessagesSections = allMessagesSections.slice(lastIndex + 1);
       const allMessagesDiv = [];
 
       for (let i = 0; i < allMessagesSections.length; i += 1) {
@@ -235,16 +240,14 @@ const UpworkSender = async () => {
       newDiv.id = 'main-product-info-div';
 
       const root = createRoot(newDiv);
-      const url = upworkCustomers[i].href;
-      const match = url.match(/room_[a-z0-9]+/i);
-      if (match) {
-        const roomId = match[0];
-        console.log('roomId', roomId);
-        root.render(<Connect senderRoomId={roomId} />);
+      const roomId = upworkCustomers[i].getAttribute('id');
+      const roomName = upworkCustomers[i].querySelectorAll('.item-title');
 
-        upworkCustomers[i].appendChild(newDiv);
-        upworkCustomers[i].parentNode.insertBefore(newDiv, upworkCustomers[i].nextSibling);
-      }
+      console.log('roomId', roomId);
+      root.render(<Connect senderRoomId={roomId} senderRoomName={roomName} />);
+
+      upworkCustomers[i].appendChild(newDiv);
+      upworkCustomers[i].parentNode.insertBefore(newDiv, upworkCustomers[i].nextSibling);
     }
 
     await SaveSenderMessagesInStorage();

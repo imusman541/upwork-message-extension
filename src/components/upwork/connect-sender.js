@@ -3,7 +3,7 @@ import { Button, Modal, Select } from 'antd';
 
 import { getLocal, setLocal } from '../../services/dbService';
 
-const Connect = ({ senderRoomId }) => {
+const Connect = ({ senderRoomId, senderRoomName }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [recieverRoomId, setRecieverRoomId] = useState('');
   const [localRecieverRoomIds, setLocalRecieverRoomIds] = useState([]);
@@ -30,7 +30,7 @@ const Connect = ({ senderRoomId }) => {
     if (!senderRecievingMapId) {
       setIsModalOpen(!isModalOpen);
       fetchRecieverData();
-  
+
       e.stopPropagation();
       e.preventDefault();
     } else {
@@ -47,6 +47,7 @@ const Connect = ({ senderRoomId }) => {
 
   const handleOk = async () => {
     await setLocal(senderRoomId, recieverRoomId);
+    await setLocal(`${senderRoomId}_name`, senderRoomName);
     await setLocal(recieverRoomId, senderRoomId);
 
     setAlreadyMapped(true);
