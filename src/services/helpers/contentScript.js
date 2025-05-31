@@ -30,9 +30,18 @@ const updateTitle = () => {
 
 const SaveSenderMessagesInStorage = async () => {
   await waitForSelector(document, 'a[data-test="room-list-item"]');
-  const upworkCustomers = document.querySelectorAll('a[data-test="room-list-item"]');
 
   const saveMessagesForCustomer = [];
+  for (let i = 0; i < 4; i += 1) {
+    document.querySelectorAll('*').forEach(el => {
+      if (el.scrollHeight > el.clientHeight) {
+        el.scrollBy({ top: 3600, behavior: 'smooth' });
+      }
+    });
+    await sleep(3);
+  }
+
+  const upworkCustomers = document.querySelectorAll('a[data-test="room-list-item"]');
   for (let i = 0; i < upworkCustomers.length; i += 1) {
     const customer = upworkCustomers[i];
     const senderRoomId = customer.getAttribute('id');
@@ -42,84 +51,80 @@ const SaveSenderMessagesInStorage = async () => {
     }
   }
 
-  console.log('\n saveMessagesForCustomer', saveMessagesForCustomer);
   for (let i = 0; i < saveMessagesForCustomer.length; i += 1) {
     const senderRoomId = saveMessagesForCustomer[i].getAttribute('id');
-    let newMessagesCount = saveMessagesForCustomer[i].querySelector('div[class*="item-indicators"]')?.innerText;
-    console.log('\n newMessagesCount', newMessagesCount);
-    await sleep(10);
-    newMessagesCount = saveMessagesForCustomer[i].querySelector('div[class*="item-indicators"]')?.innerText;
+    saveMessagesForCustomer[i].click();
+    await sleep(3);
 
-    if (newMessagesCount) {
-      newMessagesCount = Number(newMessagesCount);
-      console.log('\n newMessagesCount', newMessagesCount);
-      saveMessagesForCustomer[i].click();
-      await sleep(2);
-      await waitForSelector(document, 'div[class="desktop-room"]');
+    await waitForSelector(document, 'div[class="desktop-room"]');
 
-      const desktopRoom = document.querySelector('div[class="desktop-room"]');
-      let allMessagesSections = desktopRoom.querySelectorAll('div[class*="story-inner"]');
-      allMessagesSections = [...allMessagesSections];
-      const reversedIndex = [...allMessagesSections].reverse().findIndex(obj => obj.classList.contains('is-favorite-story'));
-      if (reversedIndex === -1) continue;
-      const lastIndex = allMessagesSections.length - 1 - reversedIndex;
-      allMessagesSections = allMessagesSections.slice(lastIndex + 1);
-      const allMessagesDiv = [];
+    const desktopRoom = document.querySelector('div[class="desktop-room"]');
+    let allMessagesSections = desktopRoom.querySelectorAll('div[class*="story-inner"]');
+    allMessagesSections = [...allMessagesSections];
+    const reversedIndex = [...allMessagesSections]?.reverse()?.findIndex(obj => obj?.classList?.contains('is-favorite-story'));
 
-      for (let i = 0; i < allMessagesSections.length; i += 1) {
-        const messageSection = allMessagesSections[i];
-        // text message
-        const textMessage = messageSection.querySelector('div[class="up-d-message"]')?.innerText;
+    if (reversedIndex === -1) continue;
 
-        if (textMessage?.startsWith('NTF')) continue;
+    const lastIndex = allMessagesSections.length - 1 - reversedIndex;
+    console.log('🚀 ~ :71 ~ SaveSenderMessagesInStorage ~ lastIndex:', lastIndex);
+    allMessagesSections = allMessagesSections?.slice(lastIndex + 1);
+    console.log('🚀 ~ :73 ~ SaveSenderMessagesInStorage ~ allMessagesSections:', allMessagesSections);
+    const allMessagesDiv = [];
 
-        const message = {};
+    for (let i = 0; i < allMessagesSections.length; i += 1) {
+      const messageSection = allMessagesSections[i];
+      // text message
+      const textMessage = messageSection.querySelector('div[class="up-d-message"]')?.innerText;
 
-        if (textMessage) {
-          // allMessagesDiv.push(textMessage);
-          extend(message, {
-            message: textMessage
-          });
-        }
-        const attachments = [];
+      if (textMessage?.startsWith('NTF') || textMessage?.toLowerCase()?.includes('removed this message')) continue;
 
-        // file
-        const isAttachment = messageSection.querySelector('.files-toggle');
-        if (isAttachment) {
-          const fileSpans = messageSection.querySelectorAll('.file-name');
-          let fileSpan = [];
-          if (fileSpans?.length) {
-            fileSpan = [...fileSpans];
-            const fileUrls = fileSpan?.map((obj) => obj.querySelector('a')?.href || '');
-            if (fileUrls?.length) attachments.push(...fileUrls);
-          } else {
-            const imageMessage = messageSection.querySelector('img')?.getAttribute('src');
-            if (imageMessage) {
-              attachments.push(imageMessage);
-            }
+      const message = {};
+
+      if (textMessage) {
+        // allMessagesDiv.push(textMessage);
+        extend(message, {
+          message: textMessage
+        });
+      }
+      const attachments = [];
+
+      // file
+      const isAttachment = messageSection.querySelector('.files-toggle');
+      if (isAttachment) {
+        let multipleFiles = messageSection.querySelectorAll('div[class="up-d-story-reference"]');
+        multipleFiles = [...multipleFiles];
+        const fileSpans = multipleFiles?.map((obj) => obj.querySelector('a[class*="up-n-link"]'));
+        // const fileSpans = messageSection.querySelectorAll('a[href*="/ab/messages"]');
+
+        let fileSpan = [];
+        if (fileSpans?.length) {
+          fileSpan = [...fileSpans];
+          const fileUrls = fileSpan?.map((obj) => obj?.href || '');
+          if (fileUrls?.length) attachments.push(...fileUrls);
+        } else {
+          const imageMessage = messageSection.querySelector('img')?.getAttribute('src');
+          if (imageMessage) {
+            attachments.push(imageMessage);
           }
         }
-
-        extend(message, { attachments });
-
-        allMessagesDiv.push(message);
       }
 
-      console.log('\n allMessagesDiv', allMessagesDiv.length, allMessagesDiv);
-      const lastMessages = allMessagesDiv.slice(-newMessagesCount);
-      console.log('\n lastMessages', lastMessages);
-      if (lastMessages.length) {
-        await setLocal(`sender-messages-${senderRoomId}`, lastMessages);
+      extend(message, { attachments });
+
+      allMessagesDiv.push(message);
+    }
+    console.log('🚀 ~ :74 ~ SaveSenderMessagesInStorage ~ allMessagesDiv:', allMessagesDiv.length, allMessagesDiv);
+    if (allMessagesDiv?.length) {
+      await setLocal(`sender-messages-${senderRoomId}`, allMessagesDiv);
+
+      const lastMessage = allMessagesSections[allMessagesSections.length - 1].querySelector('button[id="setFavoriteStory"]');
+
+      const ariaLabel = lastMessage?.getAttribute('aria-label');
+      if (ariaLabel?.toLowerCase()?.includes('remove')) {
+        continue;
+      } else {
+        lastMessage.click();
       }
-
-      let moveToChat = i;
-      if (moveToChat === 0) moveToChat += 1;
-      else moveToChat -= 1;
-
-      upworkCustomers[upworkCustomers?.length - 1].click();
-      await sleep(10);
-    } else {
-      console.log('\n No new messages');
     }
   }
 };
@@ -231,7 +236,6 @@ const UpworkSender = async () => {
     console.log('\n Upwork Sender Script is going to run');
     await waitForSelector(document, 'a[data-test="room-list-item"]');
     const upworkCustomers = document.querySelectorAll('a[data-test="room-list-item"]:not([articlecovered])');
-    console.log('\n upworkCustomers', upworkCustomers[1], upworkCustomers.length);
 
     for (let i = 0; i < upworkCustomers.length; i += 1) {
       upworkCustomers[i]?.setAttribute('articleCovered', true);
