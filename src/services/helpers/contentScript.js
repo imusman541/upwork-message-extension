@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import Connect from '../../components/upwork/connect-sender';
 import { getLocal, setLocal } from '../dbService';
 import { sleep } from '../utils';
-import { extend } from 'lodash';
+import { extend, isEqual } from 'lodash';
 
 const waitForSelector = async (document, element) => new Promise((resolve) => {
   let selector;
@@ -225,7 +225,11 @@ const SendSenderMessagesToReciever = async (recieverRoom, recieverRoomId) => {
       }
     }
 
-    await setLocal(`sender-messages-${senderRoomId}`, []);
+    const newSenderMessages = await getLocal(`sender-messages-${senderRoomId}`);
+    const isSame = isEqual(senderMessages, newSenderMessages);
+    if (isSame) {
+      await setLocal(`sender-messages-${senderRoomId}`, []);
+    }
   } catch (error) {
     alert(error.message);
   }
