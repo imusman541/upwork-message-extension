@@ -28,17 +28,19 @@ const updateTitle = () => {
   document.title = 'chrome extension installed';
 };
 
-const SaveSenderMessagesInStorage = async () => {
+const SaveSenderMessagesInStorage = async (scrollTheChat) => {
   await waitForSelector(document, 'a[data-test="room-list-item"]');
 
   const saveMessagesForCustomer = [];
-  for (let i = 0; i < 4; i += 1) {
-    document.querySelectorAll('*').forEach(el => {
-      if (el.scrollHeight > el.clientHeight) {
-        el.scrollBy({ top: 3600, behavior: 'smooth' });
-      }
-    });
-    await sleep(3);
+  if (scrollTheChat) {
+    for (let i = 0; i < 4; i += 1) {
+      document.querySelectorAll('*').forEach(el => {
+        if (el.scrollHeight > el.clientHeight) {
+          el.scrollBy({ top: 3600, behavior: 'smooth' });
+        }
+      });
+      await sleep(3);
+    }
   }
 
   const upworkCustomers = document.querySelectorAll('a[data-test="room-list-item"]');
@@ -51,6 +53,7 @@ const SaveSenderMessagesInStorage = async () => {
     }
   }
 
+  // saveMessagesForCustomer = saveMessagesForCustomer.slice(0, 30);
   for (let i = 0; i < saveMessagesForCustomer.length; i += 1) {
     const senderRoomId = saveMessagesForCustomer[i].getAttribute('id');
     saveMessagesForCustomer[i].click();
@@ -66,9 +69,9 @@ const SaveSenderMessagesInStorage = async () => {
     if (reversedIndex === -1) continue;
 
     const lastIndex = allMessagesSections.length - 1 - reversedIndex;
-    console.log('🚀 ~ :71 ~ SaveSenderMessagesInStorage ~ lastIndex:', lastIndex);
+    console.log('🚀 ~ :72 ~ lastIndex:', lastIndex);
     allMessagesSections = allMessagesSections?.slice(lastIndex + 1);
-    console.log('🚀 ~ :73 ~ SaveSenderMessagesInStorage ~ allMessagesSections:', allMessagesSections);
+    console.log('🚀 ~ :74 ~ allMessagesSections:', allMessagesSections);
     const allMessagesDiv = [];
 
     for (let i = 0; i < allMessagesSections.length; i += 1) {
@@ -76,7 +79,10 @@ const SaveSenderMessagesInStorage = async () => {
       // text message
       const textMessage = messageSection.querySelector('div[class="up-d-message"]')?.innerText;
 
-      if (textMessage?.startsWith('NTF') || textMessage?.toLowerCase()?.includes('removed this message')) continue;
+      if (textMessage?.startsWith('NTF')
+        || textMessage?.toLowerCase()?.includes('removed this message')
+        || textMessage?.toLowerCase()?.includes('to the room')
+        || textMessage?.toLowerCase()?.includes('left the room')) continue;
 
       const message = {};
 
@@ -113,7 +119,7 @@ const SaveSenderMessagesInStorage = async () => {
 
       allMessagesDiv.push(message);
     }
-    console.log('🚀 ~ :74 ~ SaveSenderMessagesInStorage ~ allMessagesDiv:', allMessagesDiv.length, allMessagesDiv);
+    console.log('🚀 ~ :122 ~ allMessagesDiv:', allMessagesDiv.length, allMessagesDiv);
     if (allMessagesDiv?.length) {
       await setLocal(`sender-messages-${senderRoomId}`, allMessagesDiv);
 
@@ -126,6 +132,11 @@ const SaveSenderMessagesInStorage = async () => {
         lastMessage.click();
       }
     }
+
+    const upworkCustomers = document.querySelectorAll('a[data-test="room-list-item"]');
+    const newMessage = upworkCustomers[0].querySelector('div[class*="item-indicators"]');
+    if (i === 0) upworkCustomers[1].click();
+    if (newMessage) break;
   }
 };
 
@@ -235,7 +246,7 @@ const SendSenderMessagesToReciever = async (recieverRoom, recieverRoomId) => {
   }
 };
 
-const UpworkSender = async () => {
+const UpworkSender = async (scrollTheChat) => {
   try {
     console.log('\n Upwork Sender Script is going to run');
     await waitForSelector(document, 'a[data-test="room-list-item"]');
@@ -244,6 +255,7 @@ const UpworkSender = async () => {
     for (let i = 0; i < upworkCustomers.length; i += 1) {
       upworkCustomers[i]?.setAttribute('articleCovered', true);
 
+      const contentDiv = upworkCustomers[i].querySelector('div[class="right-content"]');
       const newDiv = document.createElement('div');
       newDiv.id = 'main-product-info-div';
 
@@ -254,11 +266,18 @@ const UpworkSender = async () => {
       console.log('roomId', roomId);
       root.render(<Connect senderRoomId={roomId} senderRoomName={roomName} />);
 
-      upworkCustomers[i].appendChild(newDiv);
-      upworkCustomers[i].parentNode.insertBefore(newDiv, upworkCustomers[i].nextSibling);
+      console.log('\n contentDiv', contentDiv);
+      if (contentDiv) contentDiv.appendChild(newDiv);
     }
 
-    await SaveSenderMessagesInStorage();
+    const roomPanelList = document.querySelector('div[class*="rooms-panel-room-list"]');
+    if (roomPanelList) {
+      roomPanelList.style.display = 'flex';
+      roomPanelList.style.flexDirection = 'column';
+      roomPanelList.style.gap = '50px';
+    }
+
+    await SaveSenderMessagesInStorage(scrollTheChat);
   } catch (error) {
     alert(error.message);
   }
@@ -275,7 +294,7 @@ const UpworkReciever = async () => {
     const roomIds = [];
     for (let i = 0; i < upworkRecievers.length; i += 1) {
       const recieverRoomId = upworkRecievers[i].getAttribute('id');
-      const roomName = upworkRecievers[i].querySelector('div.header-row').querySelector('h4').innerText;
+      const roomName = upworkRecievers[i].querySelector('div.header-row').querySelector('span[data-test="room-name"]')?.innerText;
 
       const alreadyMapped = await getLocal(recieverRoomId);
       if (!alreadyMapped) {
@@ -317,6 +336,7 @@ const SenderScript = async () => {
   try {
     // change tab icon
     updateTabIcon('https://i.pinimg.com/736x/e2/29/50/e22950b0a26db427c651dccba60ab62c.jpg');
+    let scrollTheChat = true;
     while (true) {
       const senderCompanyReferenceId = await getLocal('sender-company-reference-id');
       const extensionEnabled = await getLocal('extension-enabled');
@@ -324,8 +344,9 @@ const SenderScript = async () => {
       if (extensionEnabled) {
         const currentUrl = document.location.href;
         if (currentUrl.includes(senderCompanyReferenceId)) {
-          await UpworkSender();
+          await UpworkSender(scrollTheChat);
           await sleep(2);
+          scrollTheChat = false;
         }
       } else {
         console.log('\n Upwork Message Extension is not enabled');
