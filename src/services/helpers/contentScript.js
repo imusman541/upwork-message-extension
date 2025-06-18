@@ -55,6 +55,7 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
 
   const delayPerRoom = await getLocal('delay-per-room');
   const numberOfRoomsToCheckLocal = await getLocal('number-of-rooms-to-check');
+  const editedMessages = await getLocal('edited-messages') || [];
   
   saveMessagesForCustomer = saveMessagesForCustomer.slice(0, numberOfRoomsToCheckLocal || 3);
   for (let i = 0; i < saveMessagesForCustomer.length; i += 1) {
@@ -71,16 +72,40 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
 
     if (reversedIndex === -1) continue;
 
-    const lastIndex = allMessagesSections.length - 1 - reversedIndex;
+    const lastIndex = (allMessagesSections.length - 1 - reversedIndex) - 1;
     console.log('🚀 ~ :72 ~ lastIndex:', lastIndex);
     allMessagesSections = allMessagesSections?.slice(lastIndex + 1);
     console.log('🚀 ~ :74 ~ allMessagesSections:', allMessagesSections);
     const allMessagesDiv = [];
 
+    if (allMessagesSections?.length) {
+      let textMessage = allMessagesSections[0].querySelector('div[class*="up-d-message"]');
+      if (textMessage?.classList?.contains('edited')) {
+        textMessage = textMessage?.innerText;
+        if (!editedMessages.includes(textMessage)) {
+          textMessage = textMessage + ' (edited)';
+        } else {
+          const lastIndexAgain = (allMessagesSections.length - 1 - reversedIndex);
+          allMessagesSections = allMessagesSections?.slice(lastIndexAgain + 1);
+        }
+      }
+    }
+
     for (let i = 0; i < allMessagesSections.length; i += 1) {
       const messageSection = allMessagesSections[i];
       // text message
-      const textMessage = messageSection.querySelector('div[class="up-d-message"]')?.innerText;
+      let textMessage = messageSection.querySelector('div[class*="up-d-message"]');
+      if (textMessage?.classList?.contains('edited')) {
+        textMessage = textMessage?.innerText;
+        if (!editedMessages.includes(textMessage)) {
+          editedMessages.push(textMessage);
+          textMessage = textMessage + ' (edited)';
+        } else {
+          continue;
+        }
+      }
+
+      textMessage = textMessage?.innerText;
 
       if (textMessage?.startsWith('NTF')
         || textMessage?.toLowerCase()?.includes('removed this message')
@@ -136,9 +161,11 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
       }
     }
 
+    if (editedMessages?.length) await setLocal('edited-messages', editedMessages);
+
     const upworkCustomers = document.querySelectorAll('a[data-test="room-list-item"]');
     const newMessage = upworkCustomers[0].querySelector('div[class*="item-indicators"]');
-    if (i === 0) upworkCustomers[1].click();
+    if (newMessage && i === 0) upworkCustomers[1].click();
     if (newMessage) break;
 
     await sleep(delayPerRoom || 1);
