@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import Connect from '../../components/upwork/connect-sender';
 import { getLocal, setLocal } from '../dbService';
 import { sleep } from '../utils';
-import { extend, isEqual } from 'lodash';
+import { extend, isEmpty, isEqual } from 'lodash';
 
 const waitForSelector = async (document, element) => new Promise((resolve) => {
   let selector;
@@ -53,10 +53,12 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
     }
   }
 
-  const delayPerRoom = await getLocal('delay-per-room');
+  const delayPerRoomStart = await getLocal('delay-per-room-start');
+  const delayPerRoomEnd = await getLocal('delay-per-room-end');
+  const randomDelay = getRandomInRange(delayPerRoomStart, delayPerRoomEnd);
   const numberOfRoomsToCheckLocal = await getLocal('number-of-rooms-to-check');
   const editedMessages = await getLocal('edited-messages') || [];
-  
+
   saveMessagesForCustomer = saveMessagesForCustomer.slice(0, numberOfRoomsToCheckLocal || 3);
   for (let i = 0; i < saveMessagesForCustomer.length; i += 1) {
     const senderRoomId = saveMessagesForCustomer[i].getAttribute('id');
@@ -143,9 +145,9 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
         }
       }
 
-      extend(message, { attachments });
+      if (attachments.length) extend(message, { attachments });
 
-      allMessagesDiv.push(message);
+      if (!isEmpty(message)) allMessagesDiv.push(message);
     }
     console.log('🚀 ~ :122 ~ allMessagesDiv:', allMessagesDiv.length, allMessagesDiv);
     if (allMessagesDiv?.length) {
@@ -168,7 +170,7 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
     if (newMessage && i === 0) upworkCustomers[1].click();
     if (newMessage) break;
 
-    await sleep(delayPerRoom || 1);
+    await sleep(randomDelay || 1);
   }
 };
 
@@ -364,6 +366,11 @@ const updateTabIcon = (url) => {
   document.head.appendChild(link);
 };
 
+const getRandomInRange = (start, end) => {
+  if (start > end) [start, end] = [end, start]; // Swap if start is greater than end
+  return Math.floor(Math.random() * (end - start + 1)) + start;
+};
+
 const SenderScript = async () => {
   try {
     // change tab icon
@@ -372,14 +379,17 @@ const SenderScript = async () => {
     while (true) {
       const senderCompanyReferenceId = await getLocal('sender-company-reference-id');
       const extensionEnabled = await getLocal('extension-enabled');
-      const delayAfterTotalRooms = await getLocal('delay-after-total-rooms');
-      console.log('\n delayAfterTotalRooms', delayAfterTotalRooms);
+      const delayAfterTotalRoomsStart = await getLocal('delay-after-total-rooms-start');
+      const delayAfterTotalRoomsEnd = await getLocal('delay-after-total-rooms-end');
+      console.log('\n delayAfterTotalRoomsStart', delayAfterTotalRoomsStart);
+      console.log('\n delayAfterTotalRoomsEnd', delayAfterTotalRoomsEnd);
+      const randomDelay = getRandomInRange(delayAfterTotalRoomsStart, delayAfterTotalRoomsEnd);
 
       if (extensionEnabled) {
         const currentUrl = document.location.href;
         if (currentUrl.includes(senderCompanyReferenceId)) {
           await UpworkSender(scrollTheChat);
-          await sleep(delayAfterTotalRooms || 1);
+          await sleep(randomDelay || 1);
           scrollTheChat = false;
         }
       } else {
