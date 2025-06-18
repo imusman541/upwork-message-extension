@@ -31,7 +31,7 @@ const updateTitle = () => {
 const SaveSenderMessagesInStorage = async (scrollTheChat) => {
   await waitForSelector(document, 'a[data-test="room-list-item"]');
 
-  const saveMessagesForCustomer = [];
+  let saveMessagesForCustomer = [];
   if (scrollTheChat) {
     for (let i = 0; i < 4; i += 1) {
       document.querySelectorAll('*').forEach(el => {
@@ -53,7 +53,10 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
     }
   }
 
-  // saveMessagesForCustomer = saveMessagesForCustomer.slice(0, 30);
+  const delayPerRoom = await getLocal('delay-per-room');
+  const numberOfRoomsToCheckLocal = await getLocal('number-of-rooms-to-check');
+  
+  saveMessagesForCustomer = saveMessagesForCustomer.slice(0, numberOfRoomsToCheckLocal || 3);
   for (let i = 0; i < saveMessagesForCustomer.length; i += 1) {
     const senderRoomId = saveMessagesForCustomer[i].getAttribute('id');
     saveMessagesForCustomer[i].click();
@@ -137,6 +140,8 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
     const newMessage = upworkCustomers[0].querySelector('div[class*="item-indicators"]');
     if (i === 0) upworkCustomers[1].click();
     if (newMessage) break;
+
+    await sleep(delayPerRoom || 1);
   }
 };
 
@@ -340,12 +345,14 @@ const SenderScript = async () => {
     while (true) {
       const senderCompanyReferenceId = await getLocal('sender-company-reference-id');
       const extensionEnabled = await getLocal('extension-enabled');
+      const delayAfterTotalRooms = await getLocal('delay-after-total-rooms');
+      console.log('\n delayAfterTotalRooms', delayAfterTotalRooms);
 
       if (extensionEnabled) {
         const currentUrl = document.location.href;
         if (currentUrl.includes(senderCompanyReferenceId)) {
           await UpworkSender(scrollTheChat);
-          await sleep(2);
+          await sleep(delayAfterTotalRooms || 1);
           scrollTheChat = false;
         }
       } else {
