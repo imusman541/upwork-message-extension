@@ -32,7 +32,8 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
   await waitForSelector(document, 'a[data-test="room-list-item"]');
 
   let saveMessagesForCustomer = [];
-  if (scrollTheChat) {
+  const numberOfRoomsToCheckLocal = await getLocal('number-of-rooms-to-check');
+  if (scrollTheChat && numberOfRoomsToCheckLocal > 15) {
     for (let i = 0; i < 4; i += 1) {
       document.querySelectorAll('*').forEach(el => {
         if (el.scrollHeight > el.clientHeight) {
@@ -56,12 +57,12 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
   const delayPerRoomStart = await getLocal('delay-per-room-start');
   const delayPerRoomEnd = await getLocal('delay-per-room-end');
   const randomDelay = getRandomInRange(delayPerRoomStart, delayPerRoomEnd);
-  const numberOfRoomsToCheckLocal = await getLocal('number-of-rooms-to-check');
-  const editedMessages = await getLocal('edited-messages') || [];
-
+  
   saveMessagesForCustomer = saveMessagesForCustomer.slice(0, numberOfRoomsToCheckLocal || 3);
   for (let i = 0; i < saveMessagesForCustomer.length; i += 1) {
     const senderRoomId = saveMessagesForCustomer[i].getAttribute('id');
+    let editedMessage = await getLocal(`edited-messages-${senderRoomId}`) || '';
+    console.log('🚀 ~ :66 ~ SaveSenderMessagesInStorage ~ editedMessage:', editedMessage);
     saveMessagesForCustomer[i].click();
     await sleep(3);
 
@@ -84,30 +85,36 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
       let textMessage = allMessagesSections[0].querySelector('div[class*="up-d-message"]');
       if (textMessage?.classList?.contains('edited')) {
         textMessage = textMessage?.innerText;
-        if (!editedMessages.includes(textMessage)) {
+        if (!editedMessage.includes(textMessage)) {
           textMessage = textMessage + ' (edited)';
         } else {
           const lastIndexAgain = (allMessagesSections.length - 1 - reversedIndex);
           allMessagesSections = allMessagesSections?.slice(lastIndexAgain + 1);
         }
+      } else {
+        const lastIndexAgain = (allMessagesSections.length - 1 - reversedIndex);
+        allMessagesSections = allMessagesSections?.slice(lastIndexAgain + 1);
       }
     }
 
+    console.log('\n allMessagesSections again', allMessagesSections);
     for (let i = 0; i < allMessagesSections.length; i += 1) {
       const messageSection = allMessagesSections[i];
       // text message
       let textMessage = messageSection.querySelector('div[class*="up-d-message"]');
       if (textMessage?.classList?.contains('edited')) {
         textMessage = textMessage?.innerText;
-        if (!editedMessages.includes(textMessage)) {
-          editedMessages.push(textMessage);
+        if (!editedMessage.includes(textMessage)) {
+          editedMessage = textMessage;
           textMessage = textMessage + ' (edited)';
         } else {
           continue;
         }
+      } else {
+        textMessage = textMessage?.innerText;
       }
 
-      textMessage = textMessage?.innerText;
+      console.log('🚀 ~ :115 ~ SaveSenderMessagesInStorage ~ textMessage:', textMessage);
 
       if (textMessage?.startsWith('NTF')
         || textMessage?.toLowerCase()?.includes('removed this message')
@@ -149,7 +156,7 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
 
       if (!isEmpty(message)) allMessagesDiv.push(message);
     }
-    console.log('🚀 ~ :122 ~ allMessagesDiv:', allMessagesDiv.length, allMessagesDiv);
+    console.log('🚀 ~ :122 ~ allMessagesDiv:', allMessagesDiv.length, allMessagesDiv, editedMessage);
     if (allMessagesDiv?.length) {
       await setLocal(`sender-messages-${senderRoomId}`, allMessagesDiv);
 
@@ -157,13 +164,15 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
 
       const ariaLabel = lastMessage?.getAttribute('aria-label');
       if (ariaLabel?.toLowerCase()?.includes('remove')) {
-        continue;
+        // continue;
       } else {
         lastMessage.click();
       }
     }
 
-    if (editedMessages?.length) await setLocal('edited-messages', editedMessages);
+    if (editedMessage) {
+      await setLocal(`edited-messages-${senderRoomId}`, editedMessage);
+    }
 
     const upworkCustomers = document.querySelectorAll('a[data-test="room-list-item"]');
     const newMessage = upworkCustomers[0].querySelector('div[class*="item-indicators"]');
@@ -198,14 +207,22 @@ const SendSenderMessagesToReciever = async (recieverRoom, recieverRoomId) => {
         await sleep(2);
 
         const senderMessage = senderMessages[i];
-        console.log('\n message', message);
         const {
           message = '',
           attachments = []
         } = senderMessage || {};
+        console.log('\n message', message);
 
-        const input = desktopRoom.querySelector('div.input-area').querySelector('p');
-        desktopRoom.querySelector('div.input-area').querySelector('p').innerText = message;
+        let input = desktopRoom.querySelector('div.input-area').querySelector('p');
+        if (input) {
+          input.innerText = message;
+        } else {
+          await sleep(3);
+          input = desktopRoom.querySelector('div.input-area').querySelector('p');
+          if (input) {
+            input.innerText = message;
+          }
+        }
 
         for (let i = 0; i < attachments.length; i += 1) {
           const attachment = attachments[i];
@@ -276,7 +293,8 @@ const SendSenderMessagesToReciever = async (recieverRoom, recieverRoomId) => {
       await setLocal(`sender-messages-${senderRoomId}`, []);
     }
   } catch (error) {
-    alert(error.message);
+    console.log('🚀 ~ :279 ~ SendSenderMessagesToReciever ~ error:', error);
+    alert(`${error.message} at line # 279`);
   }
 };
 
@@ -289,7 +307,7 @@ const UpworkSender = async (scrollTheChat) => {
     for (let i = 0; i < upworkCustomers.length; i += 1) {
       upworkCustomers[i]?.setAttribute('articleCovered', true);
 
-      const contentDiv = upworkCustomers[i].querySelector('div[class="right-content"]');
+      const contentDiv = upworkCustomers[i].querySelector('div[class*="right-content"]');
       const newDiv = document.createElement('div');
       newDiv.id = 'main-product-info-div';
 
@@ -313,7 +331,8 @@ const UpworkSender = async (scrollTheChat) => {
 
     await SaveSenderMessagesInStorage(scrollTheChat);
   } catch (error) {
-    alert(error.message);
+    console.log('🚀 ~ :317 ~ UpworkSender ~ error:', error);
+    alert(`${error.message} at line # 316`);
   }
 };
 
@@ -355,7 +374,8 @@ const UpworkReciever = async () => {
       await SendSenderMessagesToReciever(roomIds[i].room, roomIds[i].recieverRoomId);
     }
   } catch (error) {
-    alert(error.message);
+    console.log('🚀 ~ :358 ~ UpworkReciever ~ error:', error);
+    alert(`${error.message} at line # 358`);
   }
 };
 
@@ -399,7 +419,8 @@ const SenderScript = async () => {
       }
     }
   } catch (error) {
-    alert(error.message);
+    console.log('🚀 ~ :403 ~ SenderScript ~ error:', error);
+    alert(`${error.message} at line # 402`);
   }
 };
 
@@ -423,7 +444,8 @@ const RecieverScript = async () => {
       }
     }
   } catch (error) {
-    alert(error.message);
+    console.log('🚀 ~ :428 ~ RecieverScript ~ error:', error);
+    alert(`${error.message} at line # 426`);
   }
 };
 
