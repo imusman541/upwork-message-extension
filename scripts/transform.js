@@ -6,7 +6,6 @@ const manifestTransform = (content, path, options) => {
   const modify = (buffer) => {
     // copy-webpack-plugin passes a buffer
     const manifest = JSON.parse(buffer.toString());
-    // make any modifications you like, such as
     if (mode === "development") {
       // manifest.key = constants.appConfig.key;
     }
