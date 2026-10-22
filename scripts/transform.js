@@ -12,7 +12,6 @@ const manifestTransform = (content, path, options) => {
     }
     manifest.version = pkg.version;
     manifest.action.default_title = constants.appConfig.appName;
-    // pretty print to JSON with two spaces
     return JSON.stringify(manifest, null, 2);
   };
   return modify(content);
