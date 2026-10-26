@@ -123,20 +123,17 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
       const message = {};
 
       if (textMessage) {
-        // allMessagesDiv.push(textMessage);
         extend(message, {
           message: textMessage
         });
       }
       const attachments = [];
 
-      // file
       const isAttachment = messageSection.querySelector('.files-toggle');
       if (isAttachment) {
         let multipleFiles = messageSection.querySelectorAll('div[class="up-d-story-reference"]');
         multipleFiles = [...multipleFiles];
         const fileSpans = multipleFiles?.map((obj) => obj.querySelector('a[class*="up-n-link"]'));
-        // const fileSpans = messageSection.querySelectorAll('a[href*="/ab/messages"]');
 
         let fileSpan = [];
         if (fileSpans?.length) {
