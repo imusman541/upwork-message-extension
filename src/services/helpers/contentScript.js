@@ -160,7 +160,6 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
 
       const ariaLabel = lastMessage?.getAttribute('aria-label');
       if (ariaLabel?.toLowerCase()?.includes('remove')) {
-        // continue;
       } else {
         lastMessage.click();
       }
@@ -180,11 +179,10 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
 };
 
 const uploadFile = async (fileInput, file) => {
-  const dataTransfer = new DataTransfer(); // Create a new DataTransfer object
-  dataTransfer.items.add(file); // Add the file to the dataTransfer object
-  fileInput.files = dataTransfer.files; // Assign the files to the input element
+  const dataTransfer = new DataTransfer();
+  dataTransfer.items.add(file);
+  fileInput.files = dataTransfer.files;
 
-  // Trigger change event to simulate the user selecting the file
   const event = new Event('change', { bubbles: true });
   await fileInput.dispatchEvent(event);
 };
