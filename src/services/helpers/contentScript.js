@@ -100,7 +100,6 @@ const SaveSenderMessagesInStorage = async (scrollTheChat) => {
     console.log('\n allMessagesSections again', allMessagesSections);
     for (let i = 0; i < allMessagesSections.length; i += 1) {
       const messageSection = allMessagesSections[i];
-      // text message
       let textMessage = messageSection.querySelector('div[class*="up-d-message"]');
       if (textMessage?.classList?.contains('edited')) {
         textMessage = textMessage?.innerText;
