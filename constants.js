@@ -5,7 +5,7 @@ const constants = {
     urls: {
       chrome: "CHROME_STORE_URL",
     },
-    key: "SSH_PUBLIC_KEY", // gather it from extension store
+    key: "SSH_PUBLIC_KEY",
   },
   contentScript: {
     mountId: generateGuid(),
