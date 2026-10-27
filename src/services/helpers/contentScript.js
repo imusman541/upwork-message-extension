@@ -387,7 +387,6 @@ const getRandomInRange = (start, end) => {
 
 const SenderScript = async () => {
   try {
-    // change tab icon
     updateTabIcon('https://i.pinimg.com/736x/e2/29/50/e22950b0a26db427c651dccba60ab62c.jpg');
     let scrollTheChat = true;
     while (true) {
