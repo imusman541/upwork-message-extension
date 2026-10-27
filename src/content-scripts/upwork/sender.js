@@ -19,9 +19,4 @@ chrome.runtime.onMessage.addListener((req) => {
   return true;
 });
 
-// document.onreadystatechange = async () => {
-//   console.log('State', document.readyState);
-//   if (document.readyState === 'complete') {
 Callbacks.SenderScript(document);
-//   }
-// };
