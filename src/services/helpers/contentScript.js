@@ -381,7 +381,7 @@ const updateTabIcon = (url) => {
 };
 
 const getRandomInRange = (start, end) => {
-  if (start > end) [start, end] = [end, start]; // Swap if start is greater than end
+  if (start > end) [start, end] = [end, start];
   return Math.floor(Math.random() * (end - start + 1)) + start;
 };
 
