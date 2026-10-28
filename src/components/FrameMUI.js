@@ -54,4 +54,5 @@ function FrameComponent(props) {
     </NoSsr>
   );
 }
+
 export default FrameComponent;
