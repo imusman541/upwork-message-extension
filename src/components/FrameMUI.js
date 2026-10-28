@@ -32,6 +32,7 @@ function FrameComponent(props) {
   const onContentDidUpdate = () => {
     instanceRef.current.contentDocument.body.dir = theme.direction;
   };
+
   return (
     <NoSsr defer>
       <IFrame
