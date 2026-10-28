@@ -12,6 +12,7 @@ function FrameComponent(props) {
     ready: false
   });
   const instanceRef = useRef();
+
   const handleRef = useCallback(ref => {
     instanceRef.current = {
       contentDocument: ref ? ref.node.contentDocument : null,
