@@ -29,6 +29,7 @@ function FrameComponent(props) {
       window: () => instanceRef.current.contentWindow
     });
   };
+
   const onContentDidUpdate = () => {
     instanceRef.current.contentDocument.body.dir = theme.direction;
   };
