@@ -32,7 +32,6 @@ function FrameComponent(props) {
   const onContentDidUpdate = () => {
     instanceRef.current.contentDocument.body.dir = theme.direction;
   };
-  // NoSsr fixes a strange concurrency issue with iframe and quick React mount/unmount
   return (
     <NoSsr defer>
       <IFrame
