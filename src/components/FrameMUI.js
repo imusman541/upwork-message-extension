@@ -29,7 +29,7 @@ function FrameComponent(props) {
       }), 
       sheetsManager: new Map(), 
       container: instanceRef.current.contentDocument.body, 
-      window: () => instanceRef.current.contentWindow
+      window: () => instanceRef.current.contentWindow 
     });
   };
 
