@@ -30,7 +30,7 @@ function FrameComponent(props) {
       sheetsManager: new Map(), 
       container: instanceRef.current.contentDocument.body, 
       window: () => instanceRef.current.contentWindow 
-    });
+    }); 
   };
 
   const onContentDidUpdate = () => {
