@@ -23,7 +23,7 @@ function FrameComponent(props) {
   const onContentDidMount = () => {
     setState({ 
       ready: true, 
-      jss: create({
+      jss: create({ 
         plugins: [...jssPreset().plugins, rtl()],
         insertionPoint: instanceRef.current.contentWindow['demo-frame-jss']
       }),
