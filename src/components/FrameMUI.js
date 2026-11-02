@@ -27,7 +27,7 @@ function FrameComponent(props) {
         plugins: [...jssPreset().plugins, rtl()], 
         insertionPoint: instanceRef.current.contentWindow['demo-frame-jss'] 
       }), 
-      sheetsManager: new Map(),
+      sheetsManager: new Map(), 
       container: instanceRef.current.contentDocument.body,
       window: () => instanceRef.current.contentWindow
     });
