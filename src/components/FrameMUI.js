@@ -6,7 +6,7 @@ import rtl from 'jss-rtl';
 import IFrame from 'react-frame-component';
 
 function FrameComponent(props) { 
-  const { children, ...other } = props;          
+  const { children, ...other } = props;           
   const theme = useTheme();
   const [state, setState] = useState({
     ready: false
