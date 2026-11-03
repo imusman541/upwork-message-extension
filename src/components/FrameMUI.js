@@ -18,7 +18,7 @@ function FrameComponent(props) {
       contentDocument: ref ? ref.node.contentDocument : null,
       contentWindow: ref ? ref.node.contentWindow : null
     };
-  }, []);
+  }, []); 
 
   const onContentDidMount = () => {
     setState({ 
