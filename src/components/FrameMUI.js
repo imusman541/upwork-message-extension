@@ -10,7 +10,7 @@ function FrameComponent(props) {
   const theme = useTheme();
   const [state, setState] = useState({ 
     ready: false
-  });
+  });  
   const instanceRef = useRef();
  
   const handleRef = useCallback(ref => {
