@@ -21,7 +21,7 @@ function FrameComponent(props) {
   }, []); 
                   
   const onContentDidMount = () => {
-    setState({                                         
+    setState({                                          
       ready: true, 
       jss: create({ 
         plugins: [...jssPreset().plugins, rtl()], 
